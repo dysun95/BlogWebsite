@@ -1,0 +1,36 @@
+<head>
+<link rel="stylesheet" type="text/css" href="{{static_url("bootstrap/css/bootstrap.min.css")}}">
+<script src="{{static_url("bootstrap/jquery-1.11.3.js")}}"></script>
+<script src="{{static_url("bootstrap/js/bootstrap.min.js")}}"></script>
+</head>
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12">
+			<h1 class="text-center">
+				<em>博客列表</em>
+			</h1>
+			<div class="row-fluid">
+				<div class="span2">
+					<img alt="140x140" src="img/a.jpg" />
+				</div>
+				<div class="span6">
+				{% autoescape None %}
+                {% for blog in blogs %}  
+					<h2>
+						{{ blog['title'] }}
+					</h2>
+					<p>
+						<span class="Time">{{ blog['date'] }}</span>
+					</p>
+					<p>
+						{{ blog['content'] }}
+					</p>
+				</div>
+				{% end %}
+				<div class="span4">
+					 <button class="btn btn-large" type="button" href="/write">写博客</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

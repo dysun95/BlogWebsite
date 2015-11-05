@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<link rel="stylesheet" type="text/css" href="{{static_url("bootstrap/css/bootstrap.min.css")}}">
+<script src="{{static_url("bootstrap/jquery-1.11.3.js")}}"></script>
+<script src="{{static_url("bootstrap/js/bootstrap.min.js")}}"></script>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span12">
+      <h3 class="text-center"> 注册账号 </h3>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span2"> </div>
+    <div class="span6">
+      <form class="form-horizontal" method="post">
+        <div class="control-group">
+          <label class="control-label" for="inputEmail">用户名</label>
+          <div class="controls">
+            <input id="inputEmail" name="username" type="text" />
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="inputPassword">密码</label>
+          <div class="controls">
+            <input id="inputPassword" name="userpassword" type="password" />
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="inputPassword">确认密码</label>
+          <div class="controls">
+            <input id="inputPassword" name="confirm_userpassword" type="password" />
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <button class="btn" type="submit" onclick="window.close();">注册</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="span4"> </div>
+  </div>
+</div>
+</body></html>
