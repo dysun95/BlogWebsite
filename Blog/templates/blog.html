@@ -17,19 +17,26 @@
 				</div>
 				<div class="span6">
                 {% for blog in blogs %}
-					<p>
-						{{ blog['title'] }}
-						<span class="Time">{{ blog['date'] }}</span>
+					<p align="center">
+						<strong>{{blog['title']}}</strong>
 					</p>
-					<div class="Article">  
-					<p>
-						{{ blog['content'] }}
+					<p align="right">
+						<span class="Time">{{blog['date']}}</span>
 					</p>
-					</div>  
+					<div class="Article">
+					<p>
+						{{blog['content']}}
+					</p>
+					</div>
+					<br></br>
 					{% end %}
 				</div>
 				<div class="span4">
-					<button class="btn btn-large btn-block" type="button" onclick="window.open('/write')">写博客</button>
+					<button class="btn btn-success btn-large" type="button" onclick="window.open('/write')">写博客</button>
+					<br></br>
+					<form method="post" action="/delete">
+					    <button class="btn btn-danger btn-large" type="submit">删除所有博客</button>
+					</form>
 				</div>
 			</div>
 		</div>

@@ -15,7 +15,7 @@ define("port", default=8880, help="run on the given port", type=int)
 class Application(tornado.web.Application):
 	def __init__(self):
 		tornado.web.Application.__init__(self,
-			handlers=[(r"/",LoginHandlers),(r"/register",RegisterHandlers),(r"/write",WriteHandlers),(r"/blog",BlogHandlers)],
+			handlers=[(r"/",LoginHandlers),(r"/register",RegisterHandlers),(r"/write",WriteHandlers),(r"/blog",BlogHandlers),(r"/delete",DeleteHandlers)],
 			template_path=os.path.join(os.path.dirname(__file__),"templates"),
 			static_path=os.path.join(os.path.dirname(__file__),"static")
 			)
@@ -98,7 +98,7 @@ class WriteHandlers(tornado.web.RequestHandler):
 			cursor.execute('SELECT max(id) FROM bloglist')
 			maxid=cursor.fetchall()
 			print (maxid)
-			if maxid[0][0]:
+			if maxid[0][0]!=None:
 				if maxid[0][0]>=0:
 					id=maxid[0][0]+1
 			cursor.execute('INSERT INTO bloglist(id,title,content,date) values(%s,%s,%s,%s)',[id,title,content,datetime.datetime.now().strftime('%y-%m-%d %I:%M:%S %p')])
@@ -115,8 +115,10 @@ class BlogHandlers(tornado.web.RequestHandler):
 		conn=mysql.connector.connect(user="root",password="123456",database="blogwebsite")
 		cursor=conn.cursor()
 		cursor.execute('CREATE TABLE IF NOT EXISTS bloglist(id int,title varchar(100),content varchar(600),date varchar(20))')
-		cursor.execute('SELECT * FROM bloglist')
+		cursor.execute('SELECT * FROM bloglist ORDER BY date')
 		bloglist=cursor.fetchall()
+		cursor.close()
+		conn.close()
 		print (bloglist)
 		blog=[]
 		if bloglist:
@@ -126,6 +128,17 @@ class BlogHandlers(tornado.web.RequestHandler):
 				self.render("blog.html",blogs=blog)
 		else:
 			self.render("blog.html",blogs=(dict(id=-1,title="无",content="空",date="00-00-00 00:00:00 AM"),))
+
+class DeleteHandlers(tornado.web.RequestHandler):
+	def post(self):
+		conn=mysql.connector.connect(user="root",password="123456",database="blogwebsite")
+		cursor=conn.cursor()
+		cursor.execute('DELETE FROM bloglist')
+		conn.commit()
+		print ('a')
+		cursor.close()
+		conn.close()
+		self.redirect('/blog')
 
 def main():
 	tornado.options.parse_command_line()
