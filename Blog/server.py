@@ -11,38 +11,55 @@ import mysql.connector
 
 from tornado.options import define, options
 define("port", default=8880, help="run on the given port", type=int)
+define("db_name", default="blogwebsite", help="database", type=str)
+define("db_user", default="root", help="user", type=str)
+define("db_pass", default="123456", help="password", type=str)
+
+
 
 class Application(tornado.web.Application):
 	def __init__(self):
 		tornado.web.Application.__init__(self,
-			handlers=[(r"/",LoginHandlers),(r"/register",RegisterHandlers),(r"/write",WriteHandlers),(r"/blog",BlogHandlers),(r"/delete",DeleteHandlers)],
+			handlers=[(r"/",LoginHandlers),
+				(r"/logout",LogoutHandlers),
+				(r"/register",RegisterHandlers),
+				(r"/write",WriteHandlers),
+				(r"/blog",BlogHandlers),
+				(r"/delete",DeleteHandlers)
+				],
 			template_path=os.path.join(os.path.dirname(__file__),"templates"),
-			static_path=os.path.join(os.path.dirname(__file__),"static")
+			static_path=os.path.join(os.path.dirname(__file__),"static"),
+			cookie_secret="CkwXIkG6RXs15skVeMBhdbJKt0QSqk1tivD1smsr98Y="
 			)
 
+conn=mysql.connector.connect(user=options.db_user,password=options.db_pass,database=options.db_name)
+cursor=conn.cursor()
+
+class BaseHandlers(tornado.web.RequestHandler):
+	def get_current_user(self):
+		return self.get_secure_cookie("username")
+
 #登录模块
-class LoginHandlers(tornado.web.RequestHandler):
+class LoginHandlers(BaseHandlers):
 	def get(self):
-		self.render("login.html")
+		if self.current_user is  None:
+			self.render("login.html")
+		else:
+			self.redirect('/blog')
 
 	def post(self):
-		input_username=self.get_argument("username",None)
+		username=self.get_argument("username",None)
 		userpassword=self.get_argument("userpassword",None)
-		if input_username and userpassword:
-			conn=mysql.connector.connect(user="root",password="123456",database="blogwebsite")
-			cursor=conn.cursor()
-			cursor.execute('SELECT * FROM userinfo WHERE username=%s',[input_username])
-			user=cursor.fetchall()
-			if user:
-				if userpassword==user[0][2]:
-					self.redirect('/blog')
-			cursor.close()
-			conn.close()
+		cursor.execute('SELECT * FROM userinfo WHERE username=%s and userpassword=%s',[username,userpassword])
+		user=cursor.fetchall()
+		if len(user) is 0:
+			self.finish("error")
 		else:
-			self.redirect('/')
+			self.set_secure_cookie("username", username)
+			self.redirect('/blog')
 
 #注册模块
-class RegisterHandlers(tornado.web.RequestHandler):
+class RegisterHandlers(BaseHandlers):
 	def get(self):
 		self.render("register.html")
 
@@ -52,8 +69,6 @@ class RegisterHandlers(tornado.web.RequestHandler):
 		userpassword=self.get_argument("userpassword",None)
 		confirm_userpassword=self.get_argument("confirm_userpassword",None)
 		if confirm_userpassword==userpassword and input_username:
-			conn=mysql.connector.connect(user="root",password="123456",database="blogwebsite")
-			cursor=conn.cursor()
 			cursor.execute('CREATE TABLE IF NOT EXISTS userinfo(id int,username varchar(20),userpassword varchar(20))')
 			cursor.execute('SELECT * FROM userinfo')
 			user=cursor.fetchall()
@@ -76,14 +91,19 @@ class RegisterHandlers(tornado.web.RequestHandler):
 				print ('b')
 				cursor.execute('INSERT INTO userinfo(id,username,userpassword) values(%s,%s,%s)',[id,input_username,userpassword])
 				conn.commit()
-			cursor.close()
-			conn.close()
 			self.redirect('/')
 		else:
 			self.redirect('/register')
 
+#注销模块
+class LogoutHandlers(BaseHandlers):
+    def get(self):
+        self.clear_cookie("username")
+        print ('logout')
+        self.redirect("/")
+
 #写博客模块
-class WriteHandlers(tornado.web.RequestHandler):
+class WriteHandlers(BaseHandlers):
 	def get(self):
 		self.render("write.html")
 
@@ -92,8 +112,6 @@ class WriteHandlers(tornado.web.RequestHandler):
 		content=self.get_argument("content",None)
 		id=0
 		if title and content:
-			conn=mysql.connector.connect(user="root",password="123456",database="blogwebsite")
-			cursor=conn.cursor()
 			cursor.execute('CREATE TABLE IF NOT EXISTS bloglist(id int,title varchar(100),content varchar(600),date varchar(20))')
 			cursor.execute('SELECT max(id) FROM bloglist')
 			maxid=cursor.fetchall()
@@ -103,22 +121,16 @@ class WriteHandlers(tornado.web.RequestHandler):
 					id=maxid[0][0]+1
 			cursor.execute('INSERT INTO bloglist(id,title,content,date) values(%s,%s,%s,%s)',[id,title,content,datetime.datetime.now().strftime('%y-%m-%d %I:%M:%S %p')])
 			conn.commit()
-			cursor.close()
-			conn.close()
 			self.redirect('/blog')
 		else:
 			self.redirect('/write')
 
 #博客列表模块
-class BlogHandlers(tornado.web.RequestHandler):
+class BlogHandlers(BaseHandlers):
 	def get(self):
-		conn=mysql.connector.connect(user="root",password="123456",database="blogwebsite")
-		cursor=conn.cursor()
 		cursor.execute('CREATE TABLE IF NOT EXISTS bloglist(id int,title varchar(100),content varchar(600),date varchar(20))')
 		cursor.execute('SELECT * FROM bloglist ORDER BY date')
 		bloglist=cursor.fetchall()
-		cursor.close()
-		conn.close()
 		print (bloglist)
 		blog=[]
 		if bloglist:
@@ -129,19 +141,13 @@ class BlogHandlers(tornado.web.RequestHandler):
 		else:
 			self.render("blog.html",blogs=(dict(id=-1,title="无",content="空",date="00-00-00 00:00:00 AM"),))
 
-class DeleteHandlers(tornado.web.RequestHandler):
+class DeleteHandlers(BaseHandlers):
 	def post(self):
-		conn=mysql.connector.connect(user="root",password="123456",database="blogwebsite")
-		cursor=conn.cursor()
 		cursor.execute('DELETE FROM bloglist')
 		conn.commit()
-		print ('a')
-		cursor.close()
-		conn.close()
 		self.redirect('/blog')
 
 def main():
-	tornado.options.parse_command_line()
 	http_server=tornado.httpserver.HTTPServer(Application())
 	http_server.listen(options.port)
 	tornado.ioloop.IOLoop.instance().start()

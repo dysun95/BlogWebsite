@@ -32,11 +32,12 @@
 					{% end %}
 				</div>
 				<div class="span4">
-					<button class="btn btn-success btn-large" type="button" onclick="window.open('/write')">写博客</button>
+					<button class="btn btn-success btn-large" type="button" onclick="window.location='/write'">写博客</button>
 					<br></br>
 					<form method="post" action="/delete">
 					    <button class="btn btn-danger btn-large" type="submit">删除所有博客</button>
 					</form>
+					<button onclick="window.location='/logout'" class="btn btn-danger btn-large">注销</button>
 				</div>
 			</div>
 		</div>
